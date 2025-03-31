@@ -1,0 +1,49 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Запуск тестов
+        run: |
+          chmod +x tests/test.sh
+          ./tests/test.sh
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Сборка проекта
+        run: |
+          mkdir -p build
+          cp -r public/* build/
+          echo "Сборка завершена успешно"
+      - name: Загрузка артефактов
+        uses: actions/upload-artifact@v3
+        with:
+          name: website-build
+          path: build/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Загрузка артефактов
+        uses: actions/download-artifact@v3
+        with:
+          name: website-build
+          path: build/
+      - name: Имитация развертывания
+        run: |
+          echo "Развертывание на сервер..."
+          ls -la build/
+          echo "Приложение успешно развернуто на https://example.com"
